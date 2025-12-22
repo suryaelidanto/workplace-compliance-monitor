@@ -8,12 +8,12 @@ License: MIT
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from openai import OpenAI
+from openai import AsyncOpenAI
 import os
 from typing import List
 from enum import Enum
 import dotenv
-from concurrent.futures import ThreadPoolExecutor
+import asyncio
 import time
 
 dotenv.load_dotenv()
@@ -25,10 +25,9 @@ app = FastAPI(
     contact={"name": "Surya Elidanto", "url": "https://github.com/suryaelidanto"},
 )
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 MODEL_NAME = "gpt-4o-mini"
-MAX_WORKERS = 2
 
 
 class SenderRole(str, Enum):
@@ -109,7 +108,7 @@ class MonitorResponse(BaseModel):
     )
 
 
-def detect_pii(message: str) -> PIIDetectionResult:
+async def detect_pii(message: str) -> PIIDetectionResult:
     """
     Detect Personally Identifiable Information (PII) in message text.
 
@@ -162,7 +161,7 @@ def detect_pii(message: str) -> PIIDetectionResult:
     """
 
     try:
-        response = client.chat.completions.parse(
+        response = await client.chat.completions.parse(
             model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -183,7 +182,7 @@ def detect_pii(message: str) -> PIIDetectionResult:
         )
 
 
-def detect_toxicity(message: str) -> ToxicityDetectionResult:
+async def detect_toxicity(message: str) -> ToxicityDetectionResult:
     """
     Detect toxic, inappropriate, or policy-violating content.
 
@@ -234,7 +233,7 @@ def detect_toxicity(message: str) -> ToxicityDetectionResult:
     """
 
     try:
-        response = client.chat.completions.parse(
+        response = await client.chat.completions.parse(
             model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -343,7 +342,7 @@ def get_recommended_action(risk_level: RiskLevel, sender_role: SenderRole) -> st
 
 
 @app.post("/monitor-communication", response_model=MonitorResponse)
-def monitor_communication(request: MonitorRequest):
+async def monitor_communication(request: MonitorRequest):
     """
     Monitor workplace communication for compliance violations.
 
@@ -371,12 +370,9 @@ def monitor_communication(request: MonitorRequest):
     start_time = time.time()
 
     try:
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            pii_future = executor.submit(detect_pii, request.message_text)
-            toxicity_future = executor.submit(detect_toxicity, request.message_text)
-
-            pii_result = pii_future.result()
-            toxicity_result = toxicity_future.result()
+        pii_result, toxicity_result = await asyncio.gather(
+            detect_pii(request.message_text), detect_toxicity(request.message_text)
+        )
 
         final_risk, severity_score = calculate_final_risk(pii_result, toxicity_result)
         recommended_action = get_recommended_action(final_risk, request.sender_role)
@@ -404,7 +400,7 @@ def monitor_communication(request: MonitorRequest):
 
 
 @app.get("/")
-def root():
+async def root():
     """API root endpoint with service information"""
 
     return {
@@ -421,13 +417,12 @@ def root():
 
 
 @app.get("/health")
-def health_check():
+async def health_check():
     """Health check endpoint for monitoring and load balancers"""
 
     return {
         "status": "healthy",
         "model": MODEL_NAME,
-        "max_workers": MAX_WORKERS,
         "api_key_configured": bool(os.getenv("OPENAI_API_KEY")),
     }
 
