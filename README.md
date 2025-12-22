@@ -1,4 +1,4 @@
-# workplace-compliance-monitor
+# Workplace Compliance Monitor
 
 Real-time AI compliance monitoring for workplace communications detecting PII leakage and toxic content. Built with FastAPI, OpenAI, and Pydantic.
 
