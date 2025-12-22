@@ -1,0 +1,13 @@
+[project]
+name = "workplace-compliance-monitor"
+version = "0.1.0"
+description = "AI-powered workplace compliance monitoring service"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "openai>=1.47.0",
+    "pydantic>=2.9.0",
+    "python-dotenv>=1.0.1",
+]
