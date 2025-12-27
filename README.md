@@ -40,6 +40,10 @@ Run the full suite in an isolated Linux container:
 make up
 ```
 
+### Interactive API Documentation
+Once the server is running, explore and test the API directly at:
+- **Swagger UI:** `http://localhost:8000/docs`
+
 ## Example Analysis
 **Input:** `"Customer credit card: 4532-1234-5678-9010"`
 
