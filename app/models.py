@@ -36,6 +36,19 @@ class PIIDetectionResult(BaseModel):
     risk_level: RiskLevel = Field(description="Risk level for PII exposure")
     explanation: str = Field(description="Brief explanation of findings")
 
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "has_pii": True,
+                    "pii_types": ["credit_card"],
+                    "risk_level": "critical",
+                    "explanation": "Detected a 16-digit credit card number.",
+                }
+            ]
+        }
+    }
+
 
 class ToxicityDetectionResult(BaseModel):
     """Results from toxicity detection analysis"""
@@ -46,6 +59,19 @@ class ToxicityDetectionResult(BaseModel):
     )
     risk_level: RiskLevel = Field(description="Risk level for brand safety")
     explanation: str = Field(description="Brief explanation of findings")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "is_toxic": True,
+                    "toxicity_types": ["harassment"],
+                    "risk_level": "high",
+                    "explanation": "Detected personal attacks and offensive language.",
+                }
+            ]
+        }
+    }
 
 
 class MonitorRequest(BaseModel):
@@ -80,3 +106,29 @@ class MonitorResponse(BaseModel):
     processing_time_ms: int = Field(
         description="Time taken to process the request in milliseconds"
     )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "pii_detection": {
+                        "has_pii": True,
+                        "pii_types": ["credit_card"],
+                        "risk_level": "critical",
+                        "explanation": "Credit card number detected.",
+                    },
+                    "toxicity_detection": {
+                        "is_toxic": False,
+                        "toxicity_types": [],
+                        "risk_level": "safe",
+                        "explanation": "No toxic content found.",
+                    },
+                    "final_risk_level": "critical",
+                    "severity_score": 95,
+                    "recommended_action": "Block message and contact user.",
+                    "should_flag": True,
+                    "processing_time_ms": 120,
+                }
+            ]
+        }
+    }
